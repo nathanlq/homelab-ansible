@@ -1,0 +1,34 @@
+---
+- name: Create Prometheus directory
+  file:
+    path: "{{ playbook_dir }}/prometheus"
+    state: directory
+
+- name: Copy Prometheus configuration file
+  copy:
+    src: prometheus.yml
+    dest: "{{ playbook_dir }}/prometheus/prometheus.yml"
+
+- name: Ensure Docker is running
+  systemd:
+    name: docker
+    state: started
+
+- name: Run Docker Compose for monitoring
+  command: docker-compose -f {{ playbook_dir }}/docker-compose.yml up -d
+  args:
+    chdir: "{{ playbook_dir }}"
+
+- name: Wait for Grafana to be ready
+  wait_for:
+    port: 3001
+    delay: 10
+    timeout: 120
+
+- name: Verify that all containers are running
+  command: docker ps
+  register: docker_ps_output
+
+- name: Ensure all services are healthy
+  debug:
+    msg: "{{ docker_ps_output.stdout }}"

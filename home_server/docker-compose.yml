@@ -1,0 +1,84 @@
+version: '3.8'
+services:
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '81:81'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+  portainer:
+    image: portainer/portainer-ce:2.21.2
+    restart: always
+    ports:
+      - '8000:8000'
+      - '9443:9443'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    volumes:
+      - /vw-data/:/data/
+
+  redis-stack-server:
+    image: redis/redis-stack-server:latest
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --bind 0.0.0.0 --requirepass ${REDIS_PASSWORD}
+
+  forgejo:
+    image: codeberg/forgejo:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    volumes:
+      - ./forgejo/data:/var/lib/gitea
+      - ./forgejo/config:/etc/gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+    restart: unless-stopped
+
+  heimdall:
+    image: linuxserver/heimdall
+    restart: unless-stopped
+    ports:
+      - '8082:80'
+    volumes:
+      - ./heimdall:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+
+volumes:
+  portainer_data:
+  grafana_data:

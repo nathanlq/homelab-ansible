@@ -1,0 +1,73 @@
+---
+- name: Update package lists
+  apt:
+    update_cache: yes
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+
+- name: Install necessary packages
+  apt:
+    name:
+      - vim
+      - git
+      - curl
+      - wget
+      - htop
+      - net-tools
+      - openssh-server
+      - ncdu
+      - ranger
+      - dnsmasq
+    state: present
+
+- name: Configure dnsmasq
+  copy:
+    dest: /etc/dnsmasq.conf
+    content: |
+      server=1.1.1.1
+      server=1.0.0.1
+
+      server=/spacesheep.ovh/8.8.8.8
+      server=/spacesheep.ovh/8.8.4.4
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart dnsmasq
+  systemd:
+    name: dnsmasq
+    state: restarted
+    enabled: yes
+
+- name: Set a static IP address
+  template:
+    src: netplan.yaml.j2
+    dest: /etc/netplan/01-netcfg.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Apply network configuration
+  command: netplan apply
+
+- name: Ensure SSH service is enabled and started
+  systemd:
+    name: ssh
+    enabled: yes
+    state: started
+
+- name: Create a user
+  user:
+    name: "{{ new_user }}"
+    shell: /bin/bash
+    groups: sudo
+    append: yes
+    state: present
+
+- name: Set up SSH keys for the user
+  authorized_key:
+    user: "{{ new_user }}"
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"

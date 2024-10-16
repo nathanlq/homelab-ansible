@@ -1,0 +1,21 @@
+---
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+
+- name: Install Docker Compose
+  apt:
+    name: docker-compose
+    state: present
+
+- name: Ensure Docker service is enabled and started
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Launch Docker Compose
+  command: docker-compose -f {{ playbook_dir }}/docker-compose.yml up -d
+  args:
+    chdir: "{{ playbook_dir }}"
