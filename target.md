@@ -19,6 +19,7 @@
 - File serving / hosting (ftp client, rsync)
 - Docker Registry (Synology ready)
 - Drive (Synology ready)
+- Collecte des logs (proxy / app)
 
 ### Storage (server without gpu)
 - Fast DB (reddis)
