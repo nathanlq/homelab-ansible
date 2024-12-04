@@ -1,1 +1,0 @@
-La config ansible du mini-serveur.
